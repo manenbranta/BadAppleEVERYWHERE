@@ -1,0 +1,3 @@
+# Versão Portugol Studio
+Eu fiz essa versão durante minhas primeiras aulas de Técnicas de Programação e Algoritmo porque eu estava entediada :)
+Lembre-se de que essa versão funciona APENAS no [Portugol Studio](http://univali-lite.github.io/Portugol-Studio/), pois apenas ele tem as bibliotecas necessárias para manipulação de arquivos. Não tente rodar esse código em outras versões, como a versão web ou mobile pois ele não irá funcionar.
