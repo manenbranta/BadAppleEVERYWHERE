@@ -43,9 +43,10 @@ function badApple() {
     }
 
     function playAnimation() {
+        console.time('Animation Execution Time');
         if (!isRunning) return;
 
-        process.stdout.write('\x1Bc'); // Clears the console
+        setCursorPosition(0,0);
 
         try {
             const txt = fs.readFileSync(`${prefix}${format(curFrame)}${sufix}`, 'utf8');
@@ -56,8 +57,10 @@ function badApple() {
 
         curFrame++;
         if (curFrame < maxFrame && isRunning) {
-            setTimeout(playAnimation, 33); // Schedule next frame
+            //setTimeout(playAnimation, 33); // Schedule next frame
+            playAnimation();
         } else {
+            console.timeEnd('Animation Execution Time');
             process.exit(); // Exit when animation completes or if isRunning is false
         }
     }
@@ -73,4 +76,8 @@ function badApple() {
         var s = "000" + n;
         return s.substr(s.length - 4);
     }
+}
+
+function setCursorPosition(x, y) {
+    process.stdout.write(`\x1B[${y};${x}H`);
 }
