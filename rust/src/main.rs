@@ -1,8 +1,6 @@
-use std::{
-    {thread,time,fs},
-    io::{self, BufWriter, Write}
-};
+use std::{fs, thread, time, io::{self, BufReader, BufWriter, Read, Write}};
 use crossterm::{cursor::{Hide, MoveTo}, ExecutableCommand};
+use rodio::{Decoder, OutputStream, source::Source};
 use core::error;
 
 
@@ -10,10 +8,10 @@ use core::error;
 const NUM_FRAMES:u16 = 6572;
 
 /// Common parts used in the paths of all frames
-const PATH_COMMON:(&str, &str) = ("../common/res/out",".jpg.txt");
+const PATH_COMMON:(&str, &str) = ("../common/res/",".jpg.txt");
 
 /// How much time the animation pauses for each frame
-const FRAME_TIME:time::Duration = time::Duration::from_millis(30);
+const FRAME_TIME:time::Duration = time::Duration::from_millis(33);
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     let mut stdout = io::stdout();
@@ -24,7 +22,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // Hides the cursor from the screen.
     stdout.execute(Hide)?;
 
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let audio_file = BufReader::new(fs::File::open(format!("{}badapple.wav", PATH_COMMON.0)).unwrap());
+    let audio_src = Decoder::new(audio_file).unwrap();
+
+    stream_handle.play_raw(audio_src.convert_samples()).unwrap();
+
     for _ in 0..NUM_FRAMES {
+        let frame_start = time::Instant::now();
+
         cur_frame += 1;
 
         // Move the cursor to the top left of the screen, effectively
@@ -33,8 +39,24 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         stdout.execute(MoveTo(0,0))?;
 
         let frame:String = 
-        fs::read_to_string(format!("{}{}{}", PATH_COMMON.0, pad_str(&cur_frame.to_string()), PATH_COMMON.1))
-        .expect("Could not read file!");
+        match fs::File::open(format!("{}out{}{}", PATH_COMMON.0, pad_str(&cur_frame.to_string()), PATH_COMMON.1)) {
+            Ok(file) => {
+                let mut reader = BufReader::new(file);
+                let mut content = String::new();
+                
+                match reader.read_to_string(&mut content) {
+                    Ok(_) => content,
+                    Err(err) => {
+                        eprintln!("Error reading frame {} from file: {}", cur_frame, err);
+                        break;
+                    }
+                }
+            },
+            Err(err) => {
+                eprint!("An error occured while trying to open the file for the frame {}: {}", cur_frame, err);
+                break;
+            }
+        };
 
         writeln!(buf, "{}", frame)?;
 
@@ -42,7 +64,17 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         // the cursor will not effectively change positions.
         buf.flush()?;
 
-        thread::sleep(FRAME_TIME);
+        let frame_duration = frame_start.elapsed();
+
+        if frame_duration < FRAME_TIME {
+            thread::sleep(FRAME_TIME - frame_duration);
+        }
+
+        /*let frame_end = frame_start + FRAME_TIME;
+
+        // A busy while loop is used here instead of thread.sleep(),
+        // as thread.sleep() can make the animation speed imprecise.
+        while time::Instant::now() < frame_end {}*/
     }
     Ok(())
 }
