@@ -6,9 +6,8 @@ use crossterm::{
 use rodio::{source::Source, Decoder, OutputStream};
 use std::{
     fs,
-    thread, 
-    time,
     io::{self, BufReader, BufWriter, Read, Write},
+    thread, time,
 };
 
 /// The total number of frames for the animation
@@ -30,8 +29,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     stdout.execute(Hide)?;
 
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let audio_file =
-        BufReader::new(fs::File::open(format!("{}badapple.wav", PATH_COMMON.0)).expect("Wav file for the song not found"));
+    let audio_file = BufReader::new(
+        fs::File::open(format!("{}badapple.wav", PATH_COMMON.0))
+            .expect("Wav file for the song not found"),
+    );
     let audio_src = Decoder::new(audio_file).unwrap();
 
     stream_handle.play_raw(audio_src.convert_samples()).unwrap();
@@ -79,17 +80,17 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         // the cursor will not effectively change positions.
         buf.flush()?;
 
-        let frame_duration = frame_start.elapsed();
+        /*let frame_duration = frame_start.elapsed();
 
         if frame_duration < FRAME_TIME {
             thread::sleep(FRAME_TIME - frame_duration);
-        }
+        }*/
 
-        /*let frame_end = frame_start + FRAME_TIME;
+        let frame_end = frame_start + FRAME_TIME;
 
         // A busy while loop is used here instead of thread.sleep(),
         // as thread.sleep() can make the animation speed imprecise.
-        while time::Instant::now() < frame_end {}*/
+        while time::Instant::now() < frame_end {}
     }
     Ok(())
 }
