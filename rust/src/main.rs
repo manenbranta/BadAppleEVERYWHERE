@@ -1,5 +1,6 @@
 use core::error;
 use crossterm::{
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
     cursor::{Hide, MoveTo},
     ExecutableCommand,
 };
@@ -7,7 +8,7 @@ use rodio::{source::Source, Decoder, OutputStream};
 use std::{
     fs,
     io::{self, BufReader, BufWriter, Read, Write},
-    thread, time,
+    time,
 };
 
 /// The total number of frames for the animation
@@ -24,6 +25,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let mut buf = BufWriter::new(stdout.lock());
 
     let mut cur_frame: u16 = 0;
+
+    // Enters alternate screen, so previous console output 
+    // is still visible after the animation plays
+    stdout.execute(EnterAlternateScreen)?;
 
     // Hides the cursor from the screen.
     stdout.execute(Hide)?;
@@ -80,18 +85,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         // the cursor will not effectively change positions.
         buf.flush()?;
 
-        /*let frame_duration = frame_start.elapsed();
-
-        if frame_duration < FRAME_TIME {
-            thread::sleep(FRAME_TIME - frame_duration);
-        }*/
-
         let frame_end = frame_start + FRAME_TIME;
 
         // A busy while loop is used here instead of thread.sleep(),
         // as thread.sleep() can make the animation speed imprecise.
         while time::Instant::now() < frame_end {}
     }
+    stdout.execute(LeaveAlternateScreen)?;
     Ok(())
 }
 
